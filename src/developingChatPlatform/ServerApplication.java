@@ -15,6 +15,7 @@ public class ServerApplication {
         }
         catch(IOException e)
         {
+            e.printStackTrace();
         }
         Socket socket = null;
         ClientDescriptor client = null;
@@ -33,6 +34,7 @@ public class ServerApplication {
             }
             catch(IOException e)
             {
+                e.printStackTrace();
             }
         }
     }

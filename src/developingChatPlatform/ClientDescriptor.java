@@ -1,16 +1,20 @@
 package developingChatPlatform;
 
 public class ClientDescriptor implements StringConsumer, StringProducer {
-    private String nickname;
+    private String nickname = "";
     private String text;
     StringConsumer consumer;
 
     @Override
     public void consume(String str) {
+        if (nickname.equals("")) {
+            nickname = str;
+        }
+        else{
+            text = nickname + " says: " + str;
+            consumer.consume(text);
+        }
 
-        text = nickname + " : " + str;
-//        consumer.consume(text);
-        System.out.println(text);
     }
 
     @Override
@@ -20,6 +24,6 @@ public class ClientDescriptor implements StringConsumer, StringProducer {
 
     @Override
     public void removeConsumer(StringConsumer sc) {
-
+        consumer = null;
     }
 }

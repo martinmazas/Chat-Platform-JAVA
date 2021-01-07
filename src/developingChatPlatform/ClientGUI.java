@@ -8,20 +8,31 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 
 
 public class ClientGUI implements StringConsumer, StringProducer{
-    private String nickname= null;
-    private StringConsumer consumer;
+    /**
+     * Login and chat panels for each user, login panel connects to chat panel and chat panel
+     * connects to the other users
+     */
 
-    //Sign in components
+    private StringConsumer consumer;
+    private Socket socket = null;
+    ConnectionProxy proxy = null;
+
+    /**
+     * sign in components
+     */
     private JFrame signInFrame;
     private JPanel signInPanel;
     private JLabel nicknameLabel;
     private JButton signInButton;
     private JTextField nicknameField;
 
-    //Chat components
+    /**
+     * chat components
+     */
     private JFrame chatFrame;
     private JPanel chatPanelOne,chatPanelTwo;
     private JTextArea chatTextArea;
@@ -31,15 +42,22 @@ public class ClientGUI implements StringConsumer, StringProducer{
     private JButton backButton;
 
 
+    /**
+     * Class constructor
+     */
     public ClientGUI(){
-        //Sign in constructor
+        /**
+         * Initialize the sign in components
+         */
         signInFrame = new JFrame("Sign In");
         nicknameLabel = new JLabel("Nickname");
         signInPanel = new JPanel();
         signInButton = new JButton("Sign in");
         nicknameField = new JTextField();
 
-        //Chat constructor
+        /**
+         * Initialize the chat components
+         */
         chatFrame = new JFrame("Chat");
         chatPanelOne = new JPanel();
         chatPanelTwo = new JPanel();
@@ -50,6 +68,9 @@ public class ClientGUI implements StringConsumer, StringProducer{
         backButton = new JButton("Back");
     }
 
+    /**
+     * Initialize the sign in part
+     */
     public void signIn() {
         signInFrame.setSize(600,250);
         signInPanel.setBackground(Color.orange);
@@ -63,17 +84,23 @@ public class ClientGUI implements StringConsumer, StringProducer{
         signInFrame.add(signInPanel);
         signInFrame.setVisible(true);
 
+        /**
+         * By clicking the sign in button, the program sends the nickname to the start chat function
+         */
         signInButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(!nicknameField.getText().equals("")){
-                    setNickname(nicknameField.getText());
+                    String nickname = nicknameField.getText();
                     signInFrame.setVisible(false);
-                    startChat(getNickname());
+                    startChat(nickname);
                 }
             }
         });
 
+        /**
+         * By closing the window the program close the socket and end the system
+         */
         signInFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -82,12 +109,30 @@ public class ClientGUI implements StringConsumer, StringProducer{
         });
     }
 
+    /**
+     * Starting the chat frame.
+     */
     public void startChat(String nickname) {
+        /**
+         * Creates a proxy to send the nickname to the client descriptor. The new consumer will be the proxy.
+         */
+        try{
+            socket = new Socket("127.0.0.1", 1300);
+            proxy = new ConnectionProxy(socket);
+            addConsumer(proxy);
+            proxy.addConsumer(this);
+            proxy.consume(nickname);
+            proxy.start();
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+
         chatFrame.setSize(600, 600);
         chatFrame.setLayout(new BorderLayout());
-
-        chatPanelOne.setBackground(Color.YELLOW);
-        chatPanelOne.setLayout(new GridLayout(10,1));
+        chatPanelOne.setLayout(new BorderLayout());
+        chatTextArea.setEditable(false);
+        chatTextArea.setAutoscrolls(true);
+        chatTextArea.setBackground(Color.orange);
         chatPanelOne.add(chatTextArea);
         chatFrame.add(chatPanelOne, BorderLayout.CENTER);
 
@@ -100,52 +145,59 @@ public class ClientGUI implements StringConsumer, StringProducer{
 
         chatFrame.setVisible(true);
 
+        /**
+         * By clicking the send button the send function will be activated
+         * */
         sendMessageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(!chatTextField.getText().equals("")){
-                    InputStream is = null;
-                    OutputStream os = null;
-                    DataInputStream dis = null;
-                    DataOutputStream dos = null;
-                    try{
-                        Socket socket = new Socket("127.0.0.1", 1300);
-                        ConnectionProxy proxy = new ConnectionProxy(socket);
-                        proxy.consume(chatTextField.getText());
-//                        addConsumer(proxy);
-
-                    } catch (IOException exception) {
-                        exception.printStackTrace();
-                    }
+                    send(chatTextField.getText());
+                    chatTextField.setText("");
                 }
             }
         });
 
+
+        /**
+         * Closing the window the program close the socket and end the system
+         */
         chatFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                System.exit(0);
+                try {
+                    proxy.consume("Disconnect");
+                    socket.close();
+                    System.exit(0);
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
             }
         });
     }
 
+    /**
+     * The program sends the message to the board messages throught the socket
+     * and the consumer will be the proxy
+     * @param message
+     */
+    public void send(String message) {
+        addConsumer(proxy);
+        proxy.addConsumer(this);
+        proxy.consume(message);
+    }
+
+    /**
+     * running the class
+     */
     public void run() {
         signIn();
-//        startChat("Martin");
-    }
-
-    public String getNickname() {
-        return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
     }
 
 
     @Override
     public void consume(String str) {
-        consumer.consume(str);
+        chatTextArea.append(str + "\n");
     }
 
     @Override
@@ -155,6 +207,6 @@ public class ClientGUI implements StringConsumer, StringProducer{
 
     @Override
     public void removeConsumer(StringConsumer sc) {
-        System.out.println("removeConsumer");
+        consumer = null;
     }
 }

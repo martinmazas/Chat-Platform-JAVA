@@ -1,24 +1,31 @@
 package developingChatPlatform;
 
-import java.util.List;
+import java.util.ArrayList;
 
 public class MessageBoard implements StringConsumer, StringProducer {
-    private List<StringConsumer> consumersList;
+    private ArrayList<ConnectionProxy> proxiesList ;
+
+    public MessageBoard() {
+       proxiesList = new ArrayList<>();
+    }
 
     @Override
     public void consume(String str) {
-        for(int i = 0; i<consumersList.size(); i ++) {
-            consumersList.get(i).consume(str);
+        for(int i = 0; i < proxiesList.size(); i ++) {
+            proxiesList.get(i).consume(str);
         }
     }
 
     @Override
     public void addConsumer(StringConsumer sc) {
-        consumersList.add(sc);
+        if(sc != null){
+            proxiesList.add((ConnectionProxy)sc);
+        }
+
     }
 
     @Override
     public void removeConsumer(StringConsumer sc) {
-        consumersList.remove(sc);
+        proxiesList.remove(sc);
     }
 }
