@@ -15,6 +15,10 @@ public class MessageBoard implements StringConsumer, StringProducer {
 
     @Override
     public void consume(String str) {
+        /**
+         * Send the message for all the connected users. Every time check if the user is still connected to the chat.
+         * If the user is not connected remove it from the proxies list
+         */
         for (int i = 0; i < proxiesList.size(); i++) {
             if(!proxiesList.get(i).isAlive()){
                 removeConsumer(proxiesList.get(i));
