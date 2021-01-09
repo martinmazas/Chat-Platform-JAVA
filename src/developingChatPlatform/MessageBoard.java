@@ -1,8 +1,12 @@
 package developingChatPlatform;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MessageBoard implements StringConsumer, StringProducer {
+    /**
+     * Class with all the users that are connected. When the class receives a message the program send it to all the users
+     */
     private ArrayList<ConnectionProxy> proxiesList ;
 
     public MessageBoard() {
@@ -11,8 +15,14 @@ public class MessageBoard implements StringConsumer, StringProducer {
 
     @Override
     public void consume(String str) {
-        for(int i = 0; i < proxiesList.size(); i ++) {
-            proxiesList.get(i).consume(str);
+        for (int i = 0; i < proxiesList.size(); i++) {
+            if(!proxiesList.get(i).isAlive()){
+                removeConsumer(proxiesList.get(i));
+                i--;
+            }
+            else{
+                proxiesList.get(i).consume(str);
+            }
         }
     }
 

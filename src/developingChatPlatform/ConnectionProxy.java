@@ -4,18 +4,20 @@ import java.io.*;
 import java.net.Socket;
 
 
-public class ConnectionProxy extends Thread implements StringConsumer, StringProducer{
 
-    private Socket socket = null;
+public class ConnectionProxy extends Thread implements StringConsumer, StringProducer{
+    /**
+     * For each client it would be one proxy. This class let the program connect the client with the server side
+     */
+
+    private Socket socket;
     private StringConsumer consumer;
-    private DataOutputStream dos = null;
-    private DataInputStream dis = null;
+    private DataOutputStream dos;
+    private DataInputStream dis;
 
 
     /**
      * Class Constructor
-     * @param socket
-     * @throws IOException
      */
     public ConnectionProxy(Socket socket) throws IOException {
         this.socket = socket;
@@ -28,11 +30,11 @@ public class ConnectionProxy extends Thread implements StringConsumer, StringPro
        try {
            while(!socket.isClosed()) {
                String received = dis.readUTF();
-               if(received.equals("Disconnect")){
+               consumer.consume(received);
+               if (received.equals("Disconnect")) {
                    socket.close();
                    break;
                }
-               consumer.consume(received);
            }
            removeConsumer(consumer);
        } catch (IOException exception) {

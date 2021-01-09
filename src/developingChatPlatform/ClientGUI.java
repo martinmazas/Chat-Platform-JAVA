@@ -10,7 +10,6 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 
-
 public class ClientGUI implements StringConsumer, StringProducer{
     /**
      * Login and chat panels for each user, login panel connects to chat panel and chat panel
@@ -19,7 +18,7 @@ public class ClientGUI implements StringConsumer, StringProducer{
 
     private StringConsumer consumer;
     private Socket socket = null;
-    ConnectionProxy proxy = null;
+    private ConnectionProxy proxy = null;
 
     /**
      * sign in components
@@ -69,11 +68,17 @@ public class ClientGUI implements StringConsumer, StringProducer{
     }
 
     /**
+     * running the class
+     */
+    public void run() {
+        signIn();
+    }
+
+    /**
      * Initialize the sign in part
      */
     public void signIn() {
         signInFrame.setSize(600,250);
-        signInPanel.setBackground(Color.orange);
         signInFrame.setLayout(new BorderLayout());
         signInPanel.setLayout(new GridLayout(2,2));
         signInPanel.add(nicknameLabel);
@@ -99,7 +104,7 @@ public class ClientGUI implements StringConsumer, StringProducer{
         });
 
         /**
-         * By closing the window the program close the socket and end the system
+         * By closing the window the program end the system
          */
         signInFrame.addWindowListener(new WindowAdapter() {
             @Override
@@ -132,11 +137,9 @@ public class ClientGUI implements StringConsumer, StringProducer{
         chatPanelOne.setLayout(new BorderLayout());
         chatTextArea.setEditable(false);
         chatTextArea.setAutoscrolls(true);
-        chatTextArea.setBackground(Color.orange);
         chatPanelOne.add(chatTextArea);
         chatFrame.add(chatPanelOne, BorderLayout.CENTER);
 
-        chatPanelTwo.setBackground(Color.CYAN);
         chatPanelTwo.setLayout(new GridLayout(1,2));
         chatPanelTwo.add(chatTextField);
         chatPanelTwo.add(sendMessageButton);
@@ -146,13 +149,13 @@ public class ClientGUI implements StringConsumer, StringProducer{
         chatFrame.setVisible(true);
 
         /**
-         * By clicking the send button the send function will be activated
+         * By clicking the send button the text will be send it to the other users
          * */
         sendMessageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(!chatTextField.getText().equals("")){
-                    send(chatTextField.getText());
+                    consumer.consume(chatTextField.getText());
                     chatTextField.setText("");
                 }
             }
@@ -166,8 +169,10 @@ public class ClientGUI implements StringConsumer, StringProducer{
             @Override
             public void windowClosing(WindowEvent e) {
                 try {
-                    proxy.consume("Disconnect");
+                    consumer.consume("Disconnect");
                     socket.close();
+                    removeConsumer(consumer);
+                    closeComponents();
                     System.exit(0);
                 } catch (IOException exception) {
                     exception.printStackTrace();
@@ -176,22 +181,20 @@ public class ClientGUI implements StringConsumer, StringProducer{
         });
     }
 
-    /**
-     * The program sends the message to the board messages throught the socket
-     * and the consumer will be the proxy
-     * @param message
-     */
-    public void send(String message) {
-        addConsumer(proxy);
-        proxy.addConsumer(this);
-        proxy.consume(message);
-    }
+    public void closeComponents() {
+        signInFrame = null;
+        signInPanel = null;
+        nicknameLabel = null;
+        signInButton = null;
+        nicknameField = null;
 
-    /**
-     * running the class
-     */
-    public void run() {
-        signIn();
+        chatFrame = null;
+        chatPanelOne = null;
+        chatPanelTwo = null;
+        chatTextArea = null;
+        chatTextField = null;
+        sendMessageButton = null;
+
     }
 
 
